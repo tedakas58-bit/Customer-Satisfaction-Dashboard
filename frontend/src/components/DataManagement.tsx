@@ -27,10 +27,15 @@ import {
   Assessment,
   CalendarToday,
   People,
-  Add
+  Add,
+  BugReport,
+  Refresh,
+  Download
 } from '@mui/icons-material';
 import { dataManagementService } from '../services/supabaseService';
 import { addSampleData } from '../utils/sampleData';
+import { debugDatabase, testClearFunction } from '../utils/debugDatabase';
+import { exportToCSV } from '../services/csvExportService';
 
 const DataManagement = () => {
   const { i18n } = useTranslation();
@@ -76,34 +81,66 @@ const DataManagement = () => {
     }
   });
 
+  // Export mutation
+  const exportMutation = useMutation({
+    mutationFn: () => exportToCSV(i18n.language as 'en' | 'am'),
+    onError: (error: any) => {
+      alert(i18n.language === 'am' 
+        ? `ወደ CSV መላክ ሳይሳካ ቀረ: ${error.message}`
+        : `CSV export failed: ${error.message}`
+      );
+    }
+  });
+
   // Clear data mutation
   const clearDataMutation = useMutation({
     mutationFn: async () => {
+      console.log('Starting clear operation, type:', clearType);
+      
+      let result;
       switch (clearType) {
         case 'all':
-          return await dataManagementService.clearAllResponses();
+          console.log('Clearing all responses...');
+          result = await dataManagementService.clearAllResponses();
+          break;
         case 'dateRange':
-          return await dataManagementService.clearResponsesByDateRange(
+          console.log('Clearing by date range:', filters.dateFrom, 'to', filters.dateTo);
+          result = await dataManagementService.clearResponsesByDateRange(
             filters.dateFrom, 
             filters.dateTo
           );
+          break;
         case 'filtered':
-          return await dataManagementService.clearResponsesByDemographics({
+          console.log('Clearing by demographics:', filters);
+          result = await dataManagementService.clearResponsesByDemographics({
             gender: filters.gender || undefined,
             age: filters.age || undefined,
             educationLevel: filters.educationLevel || undefined,
             maritalStatus: filters.maritalStatus || undefined,
           });
+          break;
         default:
           throw new Error('Invalid clear type');
       }
+      
+      console.log('Clear operation result:', result);
+      return result;
     },
     onSuccess: (result) => {
-      // Refresh all related queries
+      // Refresh all related queries - be more aggressive with cache clearing
       queryClient.invalidateQueries({ queryKey: ['databaseStats'] });
       queryClient.invalidateQueries({ queryKey: ['overallSummary'] });
       queryClient.invalidateQueries({ queryKey: ['dimensionScores'] });
       queryClient.invalidateQueries({ queryKey: ['questionPerformance'] });
+      
+      // Also clear any cached survey response data
+      queryClient.removeQueries({ queryKey: ['overallSummary'] });
+      queryClient.removeQueries({ queryKey: ['dimensionScores'] });
+      queryClient.removeQueries({ queryKey: ['databaseStats'] });
+      
+      // Force refetch immediately
+      queryClient.refetchQueries({ queryKey: ['overallSummary'] });
+      queryClient.refetchQueries({ queryKey: ['databaseStats'] });
       
       setClearDialog(false);
       setConfirmText('');
@@ -426,7 +463,123 @@ const DataManagement = () => {
               </Button>
             </Card>
           </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Card sx={{ p: 3, border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Download sx={{ color: '#3B82F6', mr: 2 }} />
+                <Typography variant="h6" sx={{ color: 'white' }}>
+                  {i18n.language === 'am' ? 'ወደ CSV ላክ' : 'Export to CSV'}
+                </Typography>
+              </Box>
+              
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', mb: 3 }}>
+                {i18n.language === 'am' 
+                  ? 'ሙሉ የደንበኛ እርካታ ሪፖርት ወደ CSV ላክ። ይህ አጠቃላይ ማጠቃለያ፣ የልኬት ትንታኔ፣ እና ጥሬ መረጃ ይይዛል።'
+                  : 'Export comprehensive customer satisfaction report to CSV. Includes executive summary, dimension analysis, and raw data.'
+                }
+              </Typography>
+
+              <Button
+                variant="contained"
+                startIcon={<Download />}
+                onClick={() => exportMutation.mutate()}
+                disabled={exportMutation.isPending || !stats?.totalResponses}
+                sx={{ 
+                  background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%)',
+                  },
+                  '&:disabled': {
+                    background: 'rgba(59, 130, 246, 0.3)',
+                  }
+                }}
+              >
+                {exportMutation.isPending
+                  ? (i18n.language === 'am' ? 'በመላክ ላይ...' : 'Exporting...')
+                  : (i18n.language === 'am' ? 'ወደ CSV ላክ' : 'Export to CSV')
+                }
+              </Button>
+            </Card>
+          </Grid>
         </Grid>
+
+        {/* Debug Section */}
+        <Card sx={{ p: 3, mt: 3, border: '1px solid rgba(156, 163, 175, 0.3)' }}>
+          <Typography variant="h6" sx={{ color: 'white', mb: 2 }}>
+            🔧 Debug Tools
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Button
+              variant="outlined"
+              startIcon={<BugReport />}
+              onClick={async () => {
+                const result = await debugDatabase();
+                console.log('Debug result:', result);
+                alert(`Database Debug:\nResponses: ${result.responseCount || 0}\nQuestions: ${result.questionCount || 0}\nCheck console for details`);
+              }}
+              sx={{ 
+                color: '#6B7280',
+                borderColor: 'rgba(107, 114, 128, 0.5)',
+                '&:hover': {
+                  backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                  borderColor: '#6B7280'
+                }
+              }}
+            >
+              Debug Database
+            </Button>
+            
+            <Button
+              variant="outlined"
+              startIcon={<DeleteSweep />}
+              onClick={async () => {
+                const result = await testClearFunction();
+                console.log('Test clear result:', result);
+                alert(`Clear Test Result:\n${result.success ? 'Success' : 'Failed'}\nCount: ${(result as any).count || 0}\nCheck console for details`);
+                if (result.success) {
+                  queryClient.invalidateQueries({ queryKey: ['databaseStats'] });
+                  queryClient.invalidateQueries({ queryKey: ['overallSummary'] });
+                }
+              }}
+              sx={{ 
+                color: '#EF4444',
+                borderColor: 'rgba(239, 68, 68, 0.5)',
+                '&:hover': {
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  borderColor: '#EF4444'
+                }
+              }}
+            >
+              Test Clear Function
+            </Button>
+            
+            <Button
+              variant="outlined"
+              startIcon={<Refresh />}
+              onClick={() => {
+                // Force refresh all data
+                queryClient.removeQueries({ queryKey: ['databaseStats'] });
+                queryClient.removeQueries({ queryKey: ['overallSummary'] });
+                queryClient.removeQueries({ queryKey: ['dimensionScores'] });
+                queryClient.refetchQueries({ queryKey: ['databaseStats'] });
+                queryClient.refetchQueries({ queryKey: ['overallSummary'] });
+                queryClient.refetchQueries({ queryKey: ['dimensionScores'] });
+                alert('Data refreshed! Check the Analytics tab.');
+              }}
+              sx={{ 
+                color: '#3B82F6',
+                borderColor: 'rgba(59, 130, 246, 0.5)',
+                '&:hover': {
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  borderColor: '#3B82F6'
+                }
+              }}
+            >
+              Force Refresh
+            </Button>
+          </Box>
+        </Card>
       </Card>
 
       {/* Clear Data Dialog */}

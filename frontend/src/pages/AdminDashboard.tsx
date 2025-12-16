@@ -49,6 +49,7 @@ import { questionService } from '../services/supabaseService';
 import DataManagement from '../components/DataManagement';
 import EmptyStateMessage from '../components/EmptyStateMessage';
 import { addSampleData } from '../utils/sampleData';
+import { exportToCSV } from '../services/csvExportService';
 import { useAuth } from '../contexts/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -127,6 +128,17 @@ const AdminDashboard = () => {
     }
   });
 
+  // Export mutation
+  const exportMutation = useMutation({
+    mutationFn: () => exportToCSV(i18n.language as 'en' | 'am'),
+    onError: (error: any) => {
+      alert(i18n.language === 'am' 
+        ? `ወደ CSV መላክ ሳይሳካ ቀረ: ${error.message}`
+        : `CSV export failed: ${error.message}`
+      );
+    }
+  });
+
 
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
@@ -178,7 +190,7 @@ const AdminDashboard = () => {
               <People />
             </Avatar>
             <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'white', mb: 1 }}>
-              {summaryData?.totalResponses || '1,247'}
+              {summaryData?.totalResponses ?? 0}
             </Typography>
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
               {i18n.language === 'am' ? 'አጠቃላይ ምላሾች' : 'Total Responses'}
@@ -196,7 +208,7 @@ const AdminDashboard = () => {
               <TrendingUp />
             </Avatar>
             <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'white', mb: 1 }}>
-              {((summaryData?.responseRate || 0.89) * 100).toFixed(0)}%
+              {summaryData?.totalResponses > 0 ? ((summaryData?.responseRate || 0) * 100).toFixed(0) : 0}%
             </Typography>
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
               {i18n.language === 'am' ? 'ምላሽ መጠን' : 'Response Rate'}
@@ -231,12 +243,16 @@ const AdminDashboard = () => {
         
         <Grid container spacing={3}>
           {[
-            { key: 'tangibility', label: i18n.language === 'am' ? 'ተጨባጭነት' : 'Tangibility', score: 4.2, color: '#3B82F6' },
-            { key: 'responsiveness', label: i18n.language === 'am' ? 'ፈጣን አገልግሎት' : 'Responsiveness', score: 3.8, color: '#10B981' },
-            { key: 'reliability', label: i18n.language === 'am' ? 'ተዓማኒነት' : 'Reliability', score: 4.5, color: '#8B5CF6' },
-            { key: 'assurance', label: i18n.language === 'am' ? 'የሰራተኞች ብቃት' : 'Assurance', score: 4.1, color: '#F59E0B' },
-            { key: 'empathy', label: i18n.language === 'am' ? 'ተሳትፎ' : 'Empathy', score: 3.9, color: '#EF4444' }
-          ].map((dimension) => (
+            { key: 'tangibility', label: i18n.language === 'am' ? 'ተጨባጭነት' : 'Tangibility', color: '#3B82F6' },
+            { key: 'responsiveness', label: i18n.language === 'am' ? 'ፈጣን አገልግሎት' : 'Responsiveness', color: '#10B981' },
+            { key: 'reliability', label: i18n.language === 'am' ? 'ተዓማኒነት' : 'Reliability', color: '#8B5CF6' },
+            { key: 'assurance', label: i18n.language === 'am' ? 'የሰራተኞች ብቃት' : 'Assurance', color: '#F59E0B' },
+            { key: 'empathy', label: i18n.language === 'am' ? 'ተሳትፎ' : 'Empathy', color: '#EF4444' }
+          ].map((dimension) => {
+            // Get real score from summaryData, default to 0 if no data
+            const realScore = summaryData?.dimensionScores?.[dimension.key] ?? 0;
+            
+            return (
             <Grid item xs={12} md={6} lg={4} key={dimension.key}>
               <Card sx={{ p: 3, textAlign: 'center' }}>
                 <Typography variant="h6" sx={{ color: 'white', mb: 2 }}>
@@ -247,14 +263,15 @@ const AdminDashboard = () => {
                   color: dimension.color,
                   mb: 1 
                 }}>
-                  {dimension.score.toFixed(1)}
+                  {realScore.toFixed(1)}
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
                   / 5.0
                 </Typography>
               </Card>
             </Grid>
-          ))}
+            );
+          })}
         </Grid>
       </Card>
 
@@ -268,9 +285,25 @@ const AdminDashboard = () => {
             <Button
               startIcon={<Download />}
               variant="outlined"
-              sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}
+              onClick={() => exportMutation.mutate()}
+              disabled={exportMutation.isPending || !summaryData?.totalResponses}
+              sx={{ 
+                color: 'white', 
+                borderColor: 'rgba(255,255,255,0.3)',
+                '&:hover': {
+                  borderColor: 'rgba(255,255,255,0.5)',
+                  backgroundColor: 'rgba(255,255,255,0.1)'
+                },
+                '&:disabled': {
+                  color: 'rgba(255,255,255,0.4)',
+                  borderColor: 'rgba(255,255,255,0.2)'
+                }
+              }}
             >
-              {i18n.language === 'am' ? 'ወደ Excel ላክ' : 'Export to Excel'}
+              {exportMutation.isPending 
+                ? (i18n.language === 'am' ? 'በመላክ ላይ...' : 'Exporting...')
+                : (i18n.language === 'am' ? 'ወደ CSV ላክ' : 'Export to CSV')
+              }
             </Button>
             <Button
               startIcon={<DeleteSweep />}
@@ -312,37 +345,42 @@ const AdminDashboard = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {[
-                { date: '2024-12-16', gender: 'Female', age: '31-40', score: 4.2, status: 'Complete' },
-                { date: '2024-12-16', gender: 'Male', age: '25-30', score: 3.8, status: 'Complete' },
-                { date: '2024-12-15', gender: 'Female', age: '41-50', score: 4.5, status: 'Complete' },
-                { date: '2024-12-15', gender: 'Male', age: '31-40', score: 3.9, status: 'Complete' },
-              ].map((response, index) => (
-                <TableRow key={index}>
-                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>{response.date}</TableCell>
-                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>
-                    {i18n.language === 'am' ? (response.gender === 'Male' ? 'ወንድ' : 'ሴት') : response.gender}
-                  </TableCell>
-                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>{response.age}</TableCell>
-                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>
-                    <Chip 
-                      label={response.score.toFixed(1)} 
-                      size="small"
-                      sx={{ 
-                        background: response.score >= 4 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)',
-                        color: response.score >= 4 ? '#10B981' : '#F59E0B'
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>
-                    <Chip 
-                      label={i18n.language === 'am' ? 'ተጠናቅቋል' : response.status} 
-                      size="small"
-                      sx={{ background: 'rgba(16, 185, 129, 0.3)', color: '#10B981' }}
-                    />
+              {(!summaryData?.recentResponses || summaryData.recentResponses.length === 0) ? (
+                <TableRow>
+                  <TableCell colSpan={5} sx={{ textAlign: 'center', color: 'rgba(255,255,255,0.6)', py: 4 }}>
+                    {i18n.language === 'am' ? 'ምንም የቅርብ ጊዜ ምላሽ የለም' : 'No recent responses'}
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                summaryData.recentResponses.slice(0, 4).map((response: any, index: number) => (
+                  <TableRow key={index}>
+                    <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                      {new Date(response.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                      {i18n.language === 'am' ? (response.gender === 'male' ? 'ወንድ' : 'ሴት') : response.gender}
+                    </TableCell>
+                    <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>{response.age}</TableCell>
+                    <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                      <Chip 
+                        label={response.overall_score.toFixed(1)} 
+                        size="small"
+                        sx={{ 
+                          background: response.overall_score >= 4 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)',
+                          color: response.overall_score >= 4 ? '#10B981' : '#F59E0B'
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                      <Chip 
+                        label={i18n.language === 'am' ? 'ተጠናቅቋል' : 'Complete'} 
+                        size="small"
+                        sx={{ background: 'rgba(16, 185, 129, 0.3)', color: '#10B981' }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </TableContainer>

@@ -49,7 +49,7 @@ export const surveyResponseService = {
   async getOverallSummary() {
     const { data: responses, error } = await supabase
       .from('survey_responses')
-      .select('overall_score, gender, age, education_level, marital_status, created_at');
+      .select('overall_score, gender, age, education_level, marital_status, created_at, dimension_scores');
 
     if (error) throw error;
 
@@ -101,12 +101,43 @@ export const surveyResponseService = {
       ? monthlyResponses.reduce((sum, r) => sum + r.overall_score, 0) / monthlyResponses.length
       : 0;
 
+    // Calculate dimension scores
+    const dimensionScores = {
+      tangibility: 0,
+      responsiveness: 0,
+      reliability: 0,
+      assurance: 0,
+      empathy: 0
+    };
+
+    if (responses && responses.length > 0) {
+      responses.forEach(response => {
+        if (response.dimension_scores) {
+          Object.keys(dimensionScores).forEach(dim => {
+            if (response.dimension_scores[dim]) {
+              dimensionScores[dim as keyof typeof dimensionScores] += response.dimension_scores[dim];
+            }
+          });
+        }
+      });
+
+      // Calculate averages
+      Object.keys(dimensionScores).forEach(dim => {
+        dimensionScores[dim as keyof typeof dimensionScores] /= responses.length;
+      });
+    }
+
+    // Get recent responses (last 5)
+    const recentResponses = responses?.slice(0, 5) || [];
+
     return {
       totalResponses,
       overallCSAT,
-      responseRate: 0.89, // This would need to be calculated based on your metrics
+      responseRate: totalResponses > 0 ? 0.89 : 0, // This would need to be calculated based on your metrics
       lastUpdated: new Date().toISOString(),
       demographicCounts,
+      dimensionScores,
+      recentResponses,
       trends: {
         weeklyChange: weeklyCSAT - overallCSAT,
         monthlyChange: monthlyCSAT - overallCSAT
@@ -212,13 +243,28 @@ export const questionService = {
 export const dataManagementService = {
   // Clear all survey responses
   async clearAllResponses(): Promise<{ count: number }> {
-    const { count, error } = await supabase
+    // First get all records to count them
+    const { data: allRecords, error: selectError } = await supabase
+      .from('survey_responses')
+      .select('id');
+
+    if (selectError) throw selectError;
+
+    const recordCount = allRecords?.length || 0;
+
+    if (recordCount === 0) {
+      return { count: 0 };
+    }
+
+    // Delete all records by their IDs
+    const ids = allRecords.map(record => record.id);
+    const { error } = await supabase
       .from('survey_responses')
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+      .in('id', ids);
 
     if (error) throw error;
-    return { count: count || 0 };
+    return { count: recordCount };
   },
 
   // Clear responses by date range
