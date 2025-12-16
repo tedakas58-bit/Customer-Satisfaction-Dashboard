@@ -20,16 +20,6 @@ export default defineConfig({
     sourcemap: true,
   },
   define: {
-    'process.env': {},
-    global: 'globalThis',
-  },
-  optimizeDeps: {
-    include: ['xlsx']
-  },
-  resolve: {
-    alias: {
-      // Handle XLSX module resolution
-      'xlsx': 'xlsx/dist/xlsx.full.min.js'
-    }
+    'process.env': {}
   }
 })

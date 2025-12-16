@@ -1,5 +1,5 @@
 import { Box, Typography, Button, Card, Alert } from '@mui/material';
-import { Download, Science } from '@mui/icons-material';
+import { Download, TestTube } from '@mui/icons-material';
 import { testAmharicEncoding, testBrowserAmharicSupport, createTestAmharicCSV } from '../utils/amharicTest';
 import { exportToExcelWithBOM } from '../services/exportService';
 
@@ -53,7 +53,7 @@ const AmharicTest = () => {
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <Button
             variant="outlined"
-            startIcon={<Science />}
+            startIcon={<TestTube />}
             onClick={handleTestEncoding}
             sx={{ color: '#3B82F6', borderColor: '#3B82F6' }}
           >
@@ -62,7 +62,7 @@ const AmharicTest = () => {
           
           <Button
             variant="outlined"
-            startIcon={<Science />}
+            startIcon={<TestTube />}
             onClick={handleTestBrowserSupport}
             sx={{ color: '#10B981', borderColor: '#10B981' }}
           >

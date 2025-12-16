@@ -36,7 +36,7 @@ interface SurveyData {
 }
 
 const SurveyForm = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
