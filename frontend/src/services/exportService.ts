@@ -1,4 +1,5 @@
-import XLSX from 'xlsx';
+// @ts-ignore
+import XLSX from 'xlsx/dist/xlsx.full.min.js';
 import { surveyResponseService } from './supabaseService';
 
 // Remove unused interface

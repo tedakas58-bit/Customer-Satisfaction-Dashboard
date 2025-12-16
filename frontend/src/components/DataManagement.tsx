@@ -36,7 +36,7 @@ import { dataManagementService } from '../services/supabaseService';
 import { addSampleData } from '../utils/sampleData';
 import { debugDatabase, testClearFunction } from '../utils/debugDatabase';
 import { exportToCSV } from '../services/csvExportService';
-import { exportToExcel, exportToExcelWithBOM } from '../services/exportService';
+import { exportToExcelCompatibleCSV } from '../services/excelCompatibleExport';
 
 const DataManagement = () => {
   const { i18n } = useTranslation();
@@ -93,22 +93,12 @@ const DataManagement = () => {
     }
   });
 
-  const exportExcelMutation = useMutation({
-    mutationFn: () => exportToExcel(i18n.language as 'en' | 'am'),
+  const exportExcelCompatibleMutation = useMutation({
+    mutationFn: () => exportToExcelCompatibleCSV(i18n.language as 'en' | 'am'),
     onError: (error: any) => {
       alert(i18n.language === 'am' 
         ? `ወደ Excel መላክ ሳይሳካ ቀረ: ${error.message}`
         : `Excel export failed: ${error.message}`
-      );
-    }
-  });
-
-  const exportExcelBOMMutation = useMutation({
-    mutationFn: () => exportToExcelWithBOM(i18n.language as 'en' | 'am'),
-    onError: (error: any) => {
-      alert(i18n.language === 'am' 
-        ? `ወደ Excel (BOM) መላክ ሳይሳካ ቀረ: ${error.message}`
-        : `Excel (BOM) export failed: ${error.message}`
       );
     }
   });
@@ -526,29 +516,8 @@ const DataManagement = () => {
                 <Button
                   variant="contained"
                   startIcon={<Download />}
-                  onClick={() => exportExcelMutation.mutate()}
-                  disabled={exportExcelMutation.isPending || !stats?.totalResponses}
-                  sx={{ 
-                    background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%)',
-                    },
-                    '&:disabled': {
-                      background: 'rgba(59, 130, 246, 0.3)',
-                    }
-                  }}
-                >
-                  {exportExcelMutation.isPending
-                    ? (i18n.language === 'am' ? 'በመላክ ላይ...' : 'Exporting...')
-                    : (i18n.language === 'am' ? 'Excel ላክ' : 'Export Excel')
-                  }
-                </Button>
-
-                <Button
-                  variant="contained"
-                  startIcon={<Download />}
-                  onClick={() => exportExcelBOMMutation.mutate()}
-                  disabled={exportExcelBOMMutation.isPending || !stats?.totalResponses}
+                  onClick={() => exportExcelCompatibleMutation.mutate()}
+                  disabled={exportExcelCompatibleMutation.isPending || !stats?.totalResponses}
                   sx={{ 
                     background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                     '&:hover': {
@@ -559,7 +528,7 @@ const DataManagement = () => {
                     }
                   }}
                 >
-                  {exportExcelBOMMutation.isPending
+                  {exportExcelCompatibleMutation.isPending
                     ? (i18n.language === 'am' ? 'በመላክ ላይ...' : 'Exporting...')
                     : (i18n.language === 'am' ? 'Excel (አማርኛ)' : 'Excel (Amharic)')
                   }
@@ -569,7 +538,7 @@ const DataManagement = () => {
               {i18n.language === 'am' && (
                 <Alert severity="info" sx={{ mt: 2, backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
                   <Typography variant="body2">
-                    💡 <strong>ለአማርኛ ጽሁፍ:</strong> "Excel (አማርኛ)" ቁልፍን ይጠቀሙ። ይህ የተሻለ አማርኛ ድጋፍ ይሰጣል።
+                    💡 <strong>ለአማርኛ ጽሁፍ:</strong> "Excel (አማርኛ)" ቁልፍን ይጠቀሙ። ይህ UTF-8 BOM ይጠቀማል እና በExcel ውስጥ በቀጥታ ይከፈታል።
                   </Typography>
                 </Alert>
               )}
@@ -577,7 +546,7 @@ const DataManagement = () => {
               {i18n.language === 'en' && (
                 <Alert severity="info" sx={{ mt: 2, backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
                   <Typography variant="body2">
-                    💡 <strong>For Amharic text:</strong> Use "Excel (Amharic)" button. This provides better Amharic text support.
+                    💡 <strong>For Amharic text:</strong> Use "Excel (Amharic)" button. This uses UTF-8 BOM and opens directly in Excel.
                   </Typography>
                 </Alert>
               )}
