@@ -208,6 +208,66 @@ export const questionService = {
   }
 };
 
+// Data Management Services
+export const dataManagementService = {
+  // Clear all survey responses
+  async clearAllResponses(): Promise<{ count: number }> {
+    const { count, error } = await supabase
+      .from('survey_responses')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+
+    if (error) throw error;
+    return { count: count || 0 };
+  },
+
+  // Clear responses by date range
+  async clearResponsesByDateRange(dateFrom: string, dateTo: string): Promise<{ count: number }> {
+    const { count, error } = await supabase
+      .from('survey_responses')
+      .delete()
+      .gte('created_at', dateFrom)
+      .lte('created_at', dateTo);
+
+    if (error) throw error;
+    return { count: count || 0 };
+  },
+
+  // Clear responses by demographics
+  async clearResponsesByDemographics(filters: {
+    gender?: string;
+    age?: string;
+    educationLevel?: string;
+    maritalStatus?: string;
+  }): Promise<{ count: number }> {
+    let query = supabase.from('survey_responses').delete();
+
+    if (filters.gender) query = query.eq('gender', filters.gender);
+    if (filters.age) query = query.eq('age', filters.age);
+    if (filters.educationLevel) query = query.eq('education_level', filters.educationLevel);
+    if (filters.maritalStatus) query = query.eq('marital_status', filters.maritalStatus);
+
+    const { count, error } = await query;
+
+    if (error) throw error;
+    return { count: count || 0 };
+  },
+
+  // Get database statistics
+  async getDatabaseStats() {
+    const [responsesResult, questionsResult] = await Promise.all([
+      supabase.from('survey_responses').select('id', { count: 'exact', head: true }),
+      supabase.from('questions').select('id', { count: 'exact', head: true })
+    ]);
+
+    return {
+      totalResponses: responsesResult.count || 0,
+      totalQuestions: questionsResult.count || 0,
+      lastUpdated: new Date().toISOString()
+    };
+  }
+};
+
 // Real-time subscriptions
 export const subscriptions = {
   // Subscribe to new survey responses

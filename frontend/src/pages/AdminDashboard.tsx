@@ -39,9 +39,18 @@ import {
   People,
   Assessment,
   Star,
-  BarChart
+  BarChart,
+  Logout,
+  Language,
+  DeleteSweep
 } from '@mui/icons-material';
-import { fetchOverallSummary, fetchDimensionScores, fetchQuestionPerformance } from '../services/api';
+import { fetchOverallSummary } from '../services/api';
+import { questionService } from '../services/supabaseService';
+import DataManagement from '../components/DataManagement';
+import EmptyStateMessage from '../components/EmptyStateMessage';
+import { addSampleData } from '../utils/sampleData';
+import { useAuth } from '../contexts/AuthContext';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -70,60 +79,57 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const AdminDashboard = () => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
+  const { user, signOut } = useAuth();
+  const queryClient = useQueryClient();
   const [tabValue, setTabValue] = useState(0);
   const [questionDialog, setQuestionDialog] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<any>(null);
 
+  const toggleLanguage = () => {
+    i18n.changeLanguage(i18n.language === 'en' ? 'am' : 'en');
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   // Fetch data
   const { data: summaryData } = useQuery({
     queryKey: ['overallSummary'],
-    queryFn: fetchOverallSummary,
+    queryFn: () => fetchOverallSummary(),
     refetchInterval: 30000
   });
 
-  const { data: dimensionData } = useQuery({
-    queryKey: ['dimensionScores'],
-    queryFn: fetchDimensionScores,
+  const { data: questions = [] } = useQuery({
+    queryKey: ['questions'],
+    queryFn: () => questionService.getAll(),
     refetchInterval: 30000
   });
 
-  const { data: questionData } = useQuery({
-    queryKey: ['questionPerformance'],
-    queryFn: fetchQuestionPerformance,
-    refetchInterval: 30000
+  // Add sample data mutation
+  const addSampleMutation = useMutation({
+    mutationFn: addSampleData,
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['overallSummary'] });
+      queryClient.invalidateQueries({ queryKey: ['dimensionScores'] });
+      
+      alert(i18n.language === 'am' 
+        ? `${result.count} የናሙና ምላሾች ተጨመሩ`
+        : `${result.count} sample responses added successfully`
+      );
+    },
+    onError: (error: any) => {
+      alert(i18n.language === 'am' 
+        ? `ስህተት: ${error.message}`
+        : `Error: ${error.message}`
+      );
+    }
   });
 
-  // Mock questions data for management
-  const mockQuestions = [
-    {
-      id: 'q1_facilities',
-      dimension: 'tangibility',
-      amharic: 'የቢሮው አካባቢ ንጹህና ደህንነቱ የተጠበቀ ነው',
-      english: 'The office environment is clean and safe',
-      isActive: true,
-      order: 1
-    },
-    {
-      id: 'q2_equipment',
-      dimension: 'tangibility',
-      amharic: 'ቢሮው ዘመናዊ መሳሪያዎችና ቴክኖሎጂ አለው',
-      english: 'The office has modern equipment and technology',
-      isActive: true,
-      order: 2
-    },
-    {
-      id: 'q3_materials',
-      dimension: 'tangibility',
-      amharic: 'የመረጃ ቁሳቁሶች ግልጽና ተደራሽ ናቸው',
-      english: 'Information materials are clear and accessible',
-      isActive: true,
-      order: 3
-    },
-    // Add more questions...
-  ];
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
@@ -137,7 +143,10 @@ const AdminDashboard = () => {
     setQuestionDialog(true);
   };
 
-  const renderAnalytics = () => (
+  const renderAnalytics = () => {
+    const hasNoData = !summaryData?.totalResponses || summaryData.totalResponses === 0;
+    
+    return (
     <Box>
       {/* Key Metrics */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -205,7 +214,7 @@ const AdminDashboard = () => {
               <Assessment />
             </Avatar>
             <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'white', mb: 1 }}>
-              15
+              {questions.filter(q => q.is_active).length}
             </Typography>
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
               {i18n.language === 'am' ? 'ንቁ ጥያቄዎች' : 'Active Questions'}
@@ -255,13 +264,30 @@ const AdminDashboard = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, color: 'white' }}>
             {i18n.language === 'am' ? 'የቅርብ ጊዜ ምላሾች' : 'Recent Responses'}
           </Typography>
-          <Button
-            startIcon={<Download />}
-            variant="outlined"
-            sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}
-          >
-            {i18n.language === 'am' ? 'ወደ Excel ላክ' : 'Export to Excel'}
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              startIcon={<Download />}
+              variant="outlined"
+              sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}
+            >
+              {i18n.language === 'am' ? 'ወደ Excel ላክ' : 'Export to Excel'}
+            </Button>
+            <Button
+              startIcon={<DeleteSweep />}
+              variant="outlined"
+              onClick={() => setTabValue(3)}
+              sx={{ 
+                color: '#EF4444', 
+                borderColor: 'rgba(239, 68, 68, 0.5)',
+                '&:hover': {
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  borderColor: '#EF4444'
+                }
+              }}
+            >
+              {i18n.language === 'am' ? 'መረጃ ሰርዝ' : 'Clear Data'}
+            </Button>
+          </Box>
         </Box>
 
         <TableContainer component={Paper} sx={{ background: 'rgba(255,255,255,0.05)' }}>
@@ -321,8 +347,17 @@ const AdminDashboard = () => {
           </Table>
         </TableContainer>
       </Card>
+
+      {/* Empty State Message */}
+      {hasNoData && (
+        <EmptyStateMessage 
+          onAddSampleData={() => addSampleMutation.mutate()}
+          isLoading={addSampleMutation.isPending}
+        />
+      )}
     </Box>
-  );
+    );
+  };
 
   const renderQuestionManagement = () => (
     <Box>
@@ -362,17 +397,17 @@ const AdminDashboard = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {mockQuestions.map((question) => (
+              {questions.map((question) => (
                 <TableRow key={question.id}>
                   <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>
-                    {question.order}
+                    {question.order_number}
                   </TableCell>
                   <TableCell sx={{ color: 'rgba(255,255,255,0.8)', maxWidth: 300 }}>
                     <Typography variant="body2" sx={{ mb: 1 }}>
-                      {i18n.language === 'am' ? question.amharic : question.english}
+                      {i18n.language === 'am' ? question.text_amharic : question.text_english}
                     </Typography>
                     <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                      {i18n.language === 'am' ? question.english : question.amharic}
+                      {i18n.language === 'am' ? question.text_english : question.text_amharic}
                     </Typography>
                   </TableCell>
                   <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>
@@ -384,11 +419,11 @@ const AdminDashboard = () => {
                   </TableCell>
                   <TableCell sx={{ color: 'rgba(255,255,255,0.8)' }}>
                     <Chip 
-                      label={question.isActive ? (i18n.language === 'am' ? 'ንቁ' : 'Active') : (i18n.language === 'am' ? 'ቦዝ' : 'Inactive')} 
+                      label={question.is_active ? (i18n.language === 'am' ? 'ንቁ' : 'Active') : (i18n.language === 'am' ? 'ቦዝ' : 'Inactive')} 
                       size="small"
                       sx={{ 
-                        background: question.isActive ? 'rgba(16, 185, 129, 0.3)' : 'rgba(107, 114, 128, 0.3)',
-                        color: question.isActive ? '#10B981' : '#6B7280'
+                        background: question.is_active ? 'rgba(16, 185, 129, 0.3)' : 'rgba(107, 114, 128, 0.3)',
+                        color: question.is_active ? '#10B981' : '#6B7280'
                       }}
                     />
                   </TableCell>
@@ -437,21 +472,55 @@ const AdminDashboard = () => {
         border: '1px solid rgba(255, 255, 255, 0.2)',
         p: 3
       }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Avatar sx={{ 
-            background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
-            width: 56,
-            height: 56
-          }}>
-            <BarChart />
-          </Avatar>
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: 'white' }}>
-              {i18n.language === 'am' ? 'አስተዳዳሪ ዳሽቦርድ' : 'Admin Dashboard'}
-            </Typography>
-            <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)' }}>
-              {i18n.language === 'am' ? 'የደንበኛ እርካታ ግምገማ አስተዳደር' : 'Customer Satisfaction Survey Management'}
-            </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar sx={{ 
+              background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+              width: 56,
+              height: 56
+            }}>
+              <BarChart />
+            </Avatar>
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 700, color: 'white' }}>
+                {i18n.language === 'am' ? 'አስተዳዳሪ ዳሽቦርድ' : 'Admin Dashboard'}
+              </Typography>
+              <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                {i18n.language === 'am' ? 'የደንበኛ እርካታ ግምገማ አስተዳደር' : 'Customer Satisfaction Survey Management'}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                {i18n.language === 'am' ? 'እንኳን ደህና መጡ' : 'Welcome'}, {user?.email}
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Button
+              startIcon={<Language />}
+              onClick={toggleLanguage}
+              sx={{ 
+                color: 'white',
+                borderColor: 'rgba(255,255,255,0.3)',
+                border: '1px solid',
+                borderRadius: 2
+              }}
+            >
+              {i18n.language === 'en' ? 'አማ' : 'EN'}
+            </Button>
+            <Button
+              startIcon={<Logout />}
+              onClick={handleSignOut}
+              sx={{ 
+                background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                color: 'white',
+                borderRadius: 2,
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
+                }
+              }}
+            >
+              {i18n.language === 'am' ? 'ውጣ' : 'Sign Out'}
+            </Button>
           </Box>
         </Box>
       </Box>
@@ -477,6 +546,7 @@ const AdminDashboard = () => {
           <Tab label={i18n.language === 'am' ? 'ትንታኔዎች' : 'Analytics'} />
           <Tab label={i18n.language === 'am' ? 'ጥያቄዎች' : 'Questions'} />
           <Tab label={i18n.language === 'am' ? 'ሪፖርቶች' : 'Reports'} />
+          <Tab label={i18n.language === 'am' ? 'የመረጃ አስተዳደር' : 'Data Management'} />
         </Tabs>
       </Box>
 
@@ -498,6 +568,10 @@ const AdminDashboard = () => {
             {i18n.language === 'am' ? 'ዝርዝር ሪፖርቶች እና ትንታኔዎች ይህ ላይ ይታያሉ' : 'Detailed reports and analytics will be displayed here'}
           </Typography>
         </Box>
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={3}>
+        <DataManagement />
       </TabPanel>
 
       {/* Question Dialog */}
@@ -526,7 +600,7 @@ const AdminDashboard = () => {
               <TextField
                 fullWidth
                 label={i18n.language === 'am' ? 'ጥያቄ (አማርኛ)' : 'Question (Amharic)'}
-                defaultValue={selectedQuestion?.amharic || ''}
+                defaultValue={selectedQuestion?.text_amharic || ''}
                 sx={{ 
                   '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
                   '& .MuiOutlinedInput-root': { 
@@ -540,7 +614,7 @@ const AdminDashboard = () => {
               <TextField
                 fullWidth
                 label={i18n.language === 'am' ? 'ጥያቄ (እንግሊዝኛ)' : 'Question (English)'}
-                defaultValue={selectedQuestion?.english || ''}
+                defaultValue={selectedQuestion?.text_english || ''}
                 sx={{ 
                   '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
                   '& .MuiOutlinedInput-root': { 
@@ -575,7 +649,7 @@ const AdminDashboard = () => {
                 fullWidth
                 type="number"
                 label={i18n.language === 'am' ? 'ቅደም ተከተል' : 'Order'}
-                defaultValue={selectedQuestion?.order || ''}
+                defaultValue={selectedQuestion?.order_number || ''}
                 sx={{ 
                   '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
                   '& .MuiOutlinedInput-root': { 

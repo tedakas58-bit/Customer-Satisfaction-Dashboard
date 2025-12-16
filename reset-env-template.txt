@@ -1,0 +1,17 @@
+# FRESH ENVIRONMENT VARIABLES TEMPLATE
+# Copy this to frontend/.env and update with your actual Supabase credentials
+
+# API Configuration
+VITE_API_URL=http://localhost:5000/api
+
+# Supabase Configuration
+# Get these from your Supabase project settings > API
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+
+# Instructions:
+# 1. Go to https://supabase.com
+# 2. Open your project
+# 3. Go to Settings > API
+# 4. Copy the Project URL and replace "your-project-id.supabase.co"
+# 5. Copy the anon/public key and replace "your-anon-key-here"

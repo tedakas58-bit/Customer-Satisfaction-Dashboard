@@ -8,8 +8,13 @@ import i18n from './i18n/config';
 import RoleSelection from './pages/RoleSelection';
 import CustomerDashboard from './pages/CustomerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminSignIn from './pages/AdminSignIn';
+import AdminSetup from './pages/AdminSetup';
 import SurveyForm from './pages/SurveyForm';
 import Layout from './components/Layout/Layout';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import QuestionTest from './components/QuestionTest';
 
 // Create theme with modern gradient design
 const theme = createTheme({
@@ -113,33 +118,48 @@ function App() {
       <I18nextProvider i18n={i18n}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <Box
-            sx={{
-              minHeight: '100vh',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              backgroundAttachment: 'fixed',
-            }}
-          >
-            <Router>
-              <Routes>
-                {/* Role Selection - No Layout */}
-                <Route path="/" element={<RoleSelection />} />
-                
-                {/* Customer Routes - No Layout */}
-                <Route path="/customer" element={<CustomerDashboard />} />
-                
-                {/* Admin Routes - No Layout */}
-                <Route path="/admin" element={<AdminDashboard />} />
-                
-                {/* Survey Routes - With Layout */}
-                <Route path="/survey" element={
-                  <Layout>
-                    <SurveyForm />
-                  </Layout>
-                } />
-              </Routes>
-            </Router>
-          </Box>
+          <AuthProvider>
+            <Box
+              sx={{
+                minHeight: '100vh',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                backgroundAttachment: 'fixed',
+              }}
+            >
+              <Router>
+                <Routes>
+                  {/* Role Selection - No Layout */}
+                  <Route path="/" element={<RoleSelection />} />
+                  
+                  {/* Customer Routes - No Layout */}
+                  <Route path="/customer" element={<CustomerDashboard />} />
+                  
+                  {/* Admin Setup - No Layout */}
+                  <Route path="/admin/setup" element={<AdminSetup />} />
+                  
+                  {/* Admin Sign In - No Layout */}
+                  <Route path="/admin/signin" element={<AdminSignIn />} />
+                  
+                  {/* Protected Admin Routes - No Layout */}
+                  <Route path="/admin" element={
+                    <ProtectedRoute>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Survey Routes - With Layout */}
+                  <Route path="/survey" element={
+                    <Layout>
+                      <SurveyForm />
+                    </Layout>
+                  } />
+                  
+                  {/* Test Route - Temporary */}
+                  <Route path="/test-questions" element={<QuestionTest />} />
+                </Routes>
+              </Router>
+            </Box>
+          </AuthProvider>
         </ThemeProvider>
       </I18nextProvider>
     </QueryClientProvider>

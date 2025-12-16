@@ -158,7 +158,7 @@ const RoleSelection = () => {
                 border: '1px solid rgba(139, 92, 246, 0.5)',
               }
             }}
-            onClick={() => navigate('/admin')}
+            onClick={() => navigate('/admin/signin')}
             >
               <Avatar sx={{ 
                 background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
