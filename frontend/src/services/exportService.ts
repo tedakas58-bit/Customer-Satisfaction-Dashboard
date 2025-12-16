@@ -145,16 +145,35 @@ export const exportToExcel = async (language: 'en' | 'am' = 'en') => {
       ? `የደንበኛ-እርካታ-ሪፖርት-${timestamp}.xlsx`
       : `Customer-Satisfaction-Report-${timestamp}.xlsx`;
 
-    // Export file with proper encoding
+    // Export file with proper UTF-8 encoding
     const writeOptions = {
       bookType: 'xlsx' as const,
-      type: 'buffer' as const,
-      compression: true,
-      Props: workbook.Props
+      type: 'array' as const,
+      compression: false,
+      cellStyles: true,
+      sheetStubs: false
     };
 
-    // Write file with UTF-8 support
-    XLSX.writeFile(workbook, filename, writeOptions);
+    // Generate the file buffer with proper encoding
+    const buffer = XLSX.write(workbook, writeOptions);
+    
+    // Create blob with explicit UTF-8 encoding
+    const blob = new Blob([buffer], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' 
+    });
+    
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.style.display = 'none';
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
     
     console.log('✅ Excel export completed successfully');
     
@@ -428,6 +447,150 @@ const createFontInstructionsSheet = () => {
     [''],
     ['ማሳሰቢያ: ይህ መመሪያ ሪፖርቱን በትክክል ለማንበብ ብቻ ነው።'],
     ['Note: These instructions are only for proper reading of the report.']
+  ];
+
+  return XLSX.utils.aoa_to_sheet(data);
+};
+
+// Alternative export with UTF-8 BOM for better Amharic support
+export const exportToExcelWithBOM = async (language: 'en' | 'am' = 'en') => {
+  try {
+    console.log('🔄 Starting Excel export with UTF-8 BOM...');
+    
+    // Fetch all data
+    const responses = await surveyResponseService.getAll();
+    const summaryData = await surveyResponseService.getOverallSummary();
+    
+    if (!responses || responses.length === 0) {
+      alert(language === 'am' ? 'ምንም የሚወጣ መረጃ የለም' : 'No data to export');
+      return;
+    }
+
+    console.log(`📊 Exporting ${responses.length} responses with BOM...`);
+
+    // Create workbook with explicit UTF-8 handling
+    const workbook = XLSX.utils.book_new();
+    
+    // Set codepage for proper Unicode handling
+    workbook.Props = {
+      Title: language === 'am' ? 'የደንበኛ እርካታ ሪፖርት' : 'Customer Satisfaction Report',
+      Subject: language === 'am' ? 'ለሚ ኩራ ክፍለ ከተማ ሰላምና ደህንነት ቢሮ' : 'Lemi Kura Sub-City Peace and Security Office',
+      Author: 'CSAT System',
+      CreatedDate: new Date()
+    };
+
+    // Create sheets with explicit Unicode handling
+    const summarySheet = createSummarySheetWithBOM(summaryData, responses, language);
+    XLSX.utils.book_append_sheet(workbook, summarySheet, language === 'am' ? 'አጠቃላይ ማጠቃለያ' : 'Executive Summary');
+
+    const dimensionSheet = createDimensionAnalysisSheet(summaryData, responses, language);
+    XLSX.utils.book_append_sheet(workbook, dimensionSheet, language === 'am' ? 'የልኬት ትንታኔ' : 'Dimension Analysis');
+
+    const questionSheet = createQuestionPerformanceSheet(responses, language);
+    XLSX.utils.book_append_sheet(workbook, questionSheet, language === 'am' ? 'የጥያቄ አፈጻጸም' : 'Question Performance');
+
+    const demographicsSheet = createDemographicsSheet(summaryData, language);
+    XLSX.utils.book_append_sheet(workbook, demographicsSheet, language === 'am' ? 'የሕዝብ ስብስብ ትንታኔ' : 'Demographics Analysis');
+
+    const rawDataSheet = createRawDataSheet(responses, language);
+    XLSX.utils.book_append_sheet(workbook, rawDataSheet, language === 'am' ? 'ጥሬ መረጃ' : 'Raw Data');
+
+    if (language === 'am') {
+      const fontSheet = createFontInstructionsSheet();
+      XLSX.utils.book_append_sheet(workbook, fontSheet, 'የፊደል መመሪያ');
+    }
+
+    // Generate filename
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = language === 'am' 
+      ? `የደንበኛ-እርካታ-ሪፖርት-${timestamp}.xlsx`
+      : `Customer-Satisfaction-Report-${timestamp}.xlsx`;
+
+    // Write with UTF-8 BOM
+    const wbout = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+      compression: false
+    });
+
+    // Add UTF-8 BOM for Excel recognition
+    const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+    const finalBuffer = new Uint8Array(bom.length + wbout.length);
+    finalBuffer.set(bom, 0);
+    finalBuffer.set(wbout, bom.length);
+
+    // Create and download file
+    const blob = new Blob([finalBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    console.log('✅ Excel export with BOM completed successfully');
+    
+    const successMessage = language === 'am' 
+      ? `ሪፖርት በተሳካ ሁኔታ ወደ ${filename} ተላክ\n\n⚠️ አስፈላጊ: Excel ውስጥ ፋይሉን ሲከፍቱ:\n1. Data > Get Data > From File > From Workbook\n2. ወይም ፋይሉን በቀጥታ ይክፈቱ\n3. የፊደል ችግር ካለ Home > Font > Nyala ይምረጡ`
+      : `Report successfully exported to ${filename}\n\n⚠️ Important: When opening in Excel:\n1. Use Data > Get Data > From File > From Workbook\n2. Or open file directly\n3. If font issues, select Home > Font > Nyala`;
+    
+    alert(successMessage);
+
+  } catch (error: any) {
+    console.error('❌ Export with BOM error:', error);
+    alert(language === 'am' 
+      ? `ወደ Excel መላክ ሳይሳካ ቀረ: ${error.message}`
+      : `Excel export failed: ${error.message}`
+    );
+  }
+};
+
+// Enhanced summary sheet with better Unicode handling
+const createSummarySheetWithBOM = (summaryData: any, responses: any[], language: 'en' | 'am') => {
+  // Ensure all text is properly encoded
+  const encodeText = (text: string) => {
+    // Force UTF-8 encoding by converting to buffer and back
+    return decodeURIComponent(encodeURIComponent(text));
+  };
+
+  const data = [
+    [encodeText(language === 'am' ? 'የደንበኛ እርካታ ሪፖርት - አጠቃላይ ማጠቃለያ' : 'Customer Satisfaction Report - Executive Summary')],
+    [''],
+    [encodeText(language === 'am' ? 'ለሚ ኩራ ክፍለ ከተማ ሰላምና ደህንነት ቢሮ' : 'Lemi Kura Sub-City Peace and Security Office')],
+    [encodeText(language === 'am' ? 'የሪፖርት ቀን:' : 'Report Date:'), new Date().toLocaleDateString()],
+    [''],
+    
+    // Key Metrics with proper encoding
+    [encodeText(language === 'am' ? 'ቁልፍ አመላካቾች' : 'Key Metrics')],
+    [encodeText(language === 'am' ? 'አጠቃላይ ምላሾች:' : 'Total Responses:'), responses.length],
+    [encodeText(language === 'am' ? 'አጠቃላይ እርካታ ነጥብ:' : 'Overall CSAT Score:'), summaryData.overallCSAT?.toFixed(2) || '0.00'],
+    [encodeText(language === 'am' ? 'ምላሽ መጠን:' : 'Response Rate:'), `${((summaryData.responseRate || 0) * 100).toFixed(1)}%`],
+    [''],
+    
+    // Dimension Scores with proper encoding
+    [encodeText(language === 'am' ? 'የአገልግሎት ጥራት ልኬቶች' : 'Service Quality Dimensions')],
+    [encodeText(language === 'am' ? 'ተጨባጭነት:' : 'Tangibility:'), summaryData.dimensionScores?.tangibility?.toFixed(2) || '0.00'],
+    [encodeText(language === 'am' ? 'ፈጣን አገልግሎት:' : 'Responsiveness:'), summaryData.dimensionScores?.responsiveness?.toFixed(2) || '0.00'],
+    [encodeText(language === 'am' ? 'ተዓማኒነት:' : 'Reliability:'), summaryData.dimensionScores?.reliability?.toFixed(2) || '0.00'],
+    [encodeText(language === 'am' ? 'የሰራተኞች ብቃት:' : 'Assurance:'), summaryData.dimensionScores?.assurance?.toFixed(2) || '0.00'],
+    [encodeText(language === 'am' ? 'ተሳትፎ:' : 'Empathy:'), summaryData.dimensionScores?.empathy?.toFixed(2) || '0.00'],
+    [''],
+    
+    // Demographics Summary with proper encoding
+    [encodeText(language === 'am' ? 'የሕዝብ ስብስብ ማጠቃለያ' : 'Demographics Summary')],
+    [encodeText(language === 'am' ? 'ወንድ:' : 'Male:'), summaryData.demographicCounts?.gender?.male || 0],
+    [encodeText(language === 'am' ? 'ሴት:' : 'Female:'), summaryData.demographicCounts?.gender?.female || 0],
+    [''],
+    [encodeText(language === 'am' ? 'ዕድሜ ክልል:' : 'Age Groups:')],
+    ['18-30:', summaryData.demographicCounts?.age?.['18-30'] || 0],
+    ['31-40:', summaryData.demographicCounts?.age?.['31-40'] || 0],
+    ['41-50:', summaryData.demographicCounts?.age?.['41-50'] || 0],
+    ['50+:', summaryData.demographicCounts?.age?.['50+'] || 0],
   ];
 
   return XLSX.utils.aoa_to_sheet(data);

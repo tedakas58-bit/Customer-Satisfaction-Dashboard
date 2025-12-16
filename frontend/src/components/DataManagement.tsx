@@ -36,6 +36,7 @@ import { dataManagementService } from '../services/supabaseService';
 import { addSampleData } from '../utils/sampleData';
 import { debugDatabase, testClearFunction } from '../utils/debugDatabase';
 import { exportToCSV } from '../services/csvExportService';
+import { exportToExcel, exportToExcelWithBOM } from '../services/exportService';
 
 const DataManagement = () => {
   const { i18n } = useTranslation();
@@ -81,13 +82,33 @@ const DataManagement = () => {
     }
   });
 
-  // Export mutation
-  const exportMutation = useMutation({
+  // Export mutations
+  const exportCSVMutation = useMutation({
     mutationFn: () => exportToCSV(i18n.language as 'en' | 'am'),
     onError: (error: any) => {
       alert(i18n.language === 'am' 
         ? `ወደ CSV መላክ ሳይሳካ ቀረ: ${error.message}`
         : `CSV export failed: ${error.message}`
+      );
+    }
+  });
+
+  const exportExcelMutation = useMutation({
+    mutationFn: () => exportToExcel(i18n.language as 'en' | 'am'),
+    onError: (error: any) => {
+      alert(i18n.language === 'am' 
+        ? `ወደ Excel መላክ ሳይሳካ ቀረ: ${error.message}`
+        : `Excel export failed: ${error.message}`
+      );
+    }
+  });
+
+  const exportExcelBOMMutation = useMutation({
+    mutationFn: () => exportToExcelWithBOM(i18n.language as 'en' | 'am'),
+    onError: (error: any) => {
+      alert(i18n.language === 'am' 
+        ? `ወደ Excel (BOM) መላክ ሳይሳካ ቀረ: ${error.message}`
+        : `Excel (BOM) export failed: ${error.message}`
       );
     }
   });
@@ -464,42 +485,102 @@ const DataManagement = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12}>
             <Card sx={{ p: 3, border: '1px solid rgba(59, 130, 246, 0.3)' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <Download sx={{ color: '#3B82F6', mr: 2 }} />
                 <Typography variant="h6" sx={{ color: 'white' }}>
-                  {i18n.language === 'am' ? 'ወደ CSV ላክ' : 'Export to CSV'}
+                  {i18n.language === 'am' ? 'ሪፖርት ላክ' : 'Export Reports'}
                 </Typography>
               </Box>
               
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', mb: 3 }}>
                 {i18n.language === 'am' 
-                  ? 'ሙሉ የደንበኛ እርካታ ሪፖርት ወደ CSV ላክ። ይህ አጠቃላይ ማጠቃለያ፣ የልኬት ትንታኔ፣ እና ጥሬ መረጃ ይይዛል።'
-                  : 'Export comprehensive customer satisfaction report to CSV. Includes executive summary, dimension analysis, and raw data.'
+                  ? 'ሙሉ የደንበኛ እርካታ ሪፖርት በተለያዩ ቅርጸቶች ላክ። ለአማርኛ ጽሁፍ Excel (UTF-8 BOM) ይመከራል።'
+                  : 'Export comprehensive customer satisfaction report in various formats. Excel (UTF-8 BOM) is recommended for Amharic text.'
                 }
               </Typography>
 
-              <Button
-                variant="contained"
-                startIcon={<Download />}
-                onClick={() => exportMutation.mutate()}
-                disabled={exportMutation.isPending || !stats?.totalResponses}
-                sx={{ 
-                  background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%)',
-                  },
-                  '&:disabled': {
-                    background: 'rgba(59, 130, 246, 0.3)',
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Button
+                  variant="contained"
+                  startIcon={<Download />}
+                  onClick={() => exportCSVMutation.mutate()}
+                  disabled={exportCSVMutation.isPending || !stats?.totalResponses}
+                  sx={{ 
+                    background: 'linear-gradient(135deg, #6B7280 0%, #4B5563 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #4B5563 0%, #374151 100%)',
+                    },
+                    '&:disabled': {
+                      background: 'rgba(107, 114, 128, 0.3)',
+                    }
+                  }}
+                >
+                  {exportCSVMutation.isPending
+                    ? (i18n.language === 'am' ? 'በመላክ ላይ...' : 'Exporting...')
+                    : (i18n.language === 'am' ? 'CSV ላክ' : 'Export CSV')
                   }
-                }}
-              >
-                {exportMutation.isPending
-                  ? (i18n.language === 'am' ? 'በመላክ ላይ...' : 'Exporting...')
-                  : (i18n.language === 'am' ? 'ወደ CSV ላክ' : 'Export to CSV')
-                }
-              </Button>
+                </Button>
+
+                <Button
+                  variant="contained"
+                  startIcon={<Download />}
+                  onClick={() => exportExcelMutation.mutate()}
+                  disabled={exportExcelMutation.isPending || !stats?.totalResponses}
+                  sx={{ 
+                    background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%)',
+                    },
+                    '&:disabled': {
+                      background: 'rgba(59, 130, 246, 0.3)',
+                    }
+                  }}
+                >
+                  {exportExcelMutation.isPending
+                    ? (i18n.language === 'am' ? 'በመላክ ላይ...' : 'Exporting...')
+                    : (i18n.language === 'am' ? 'Excel ላክ' : 'Export Excel')
+                  }
+                </Button>
+
+                <Button
+                  variant="contained"
+                  startIcon={<Download />}
+                  onClick={() => exportExcelBOMMutation.mutate()}
+                  disabled={exportExcelBOMMutation.isPending || !stats?.totalResponses}
+                  sx={{ 
+                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    },
+                    '&:disabled': {
+                      background: 'rgba(16, 185, 129, 0.3)',
+                    }
+                  }}
+                >
+                  {exportExcelBOMMutation.isPending
+                    ? (i18n.language === 'am' ? 'በመላክ ላይ...' : 'Exporting...')
+                    : (i18n.language === 'am' ? 'Excel (አማርኛ)' : 'Excel (Amharic)')
+                  }
+                </Button>
+              </Box>
+
+              {i18n.language === 'am' && (
+                <Alert severity="info" sx={{ mt: 2, backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
+                  <Typography variant="body2">
+                    💡 <strong>ለአማርኛ ጽሁፍ:</strong> "Excel (አማርኛ)" ቁልፍን ይጠቀሙ። ይህ የተሻለ አማርኛ ድጋፍ ይሰጣል።
+                  </Typography>
+                </Alert>
+              )}
+              
+              {i18n.language === 'en' && (
+                <Alert severity="info" sx={{ mt: 2, backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
+                  <Typography variant="body2">
+                    💡 <strong>For Amharic text:</strong> Use "Excel (Amharic)" button. This provides better Amharic text support.
+                  </Typography>
+                </Alert>
+              )}
             </Card>
           </Grid>
         </Grid>
