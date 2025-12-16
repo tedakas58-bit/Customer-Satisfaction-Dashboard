@@ -36,7 +36,7 @@ import { dataManagementService } from '../services/supabaseService';
 import { addSampleData } from '../utils/sampleData';
 import { debugDatabase, testClearFunction } from '../utils/debugDatabase';
 import { exportToCSV } from '../services/csvExportService';
-import { exportToExcel, exportToExcelWithBOM } from '../services/exportService';
+import { exportToExcelCompatibleCSV } from '../services/excelCompatibleExport';
 
 const DataManagement = () => {
   const { i18n } = useTranslation();
@@ -93,22 +93,12 @@ const DataManagement = () => {
     }
   });
 
-  const exportExcelMutation = useMutation({
-    mutationFn: () => exportToExcel(i18n.language as 'en' | 'am'),
+  const exportExcelCompatibleMutation = useMutation({
+    mutationFn: () => exportToExcelCompatibleCSV(i18n.language as 'en' | 'am'),
     onError: (error: any) => {
       alert(i18n.language === 'am' 
         ? `ወደ Excel መላክ ሳይሳካ ቀረ: ${error.message}`
         : `Excel export failed: ${error.message}`
-      );
-    }
-  });
-
-  const exportExcelBOMMutation = useMutation({
-    mutationFn: () => exportToExcelWithBOM(i18n.language as 'en' | 'am'),
-    onError: (error: any) => {
-      alert(i18n.language === 'am' 
-        ? `ወደ Excel (BOM) መላክ ሳይሳካ ቀረ: ${error.message}`
-        : `Excel (BOM) export failed: ${error.message}`
       );
     }
   });
@@ -526,8 +516,8 @@ const DataManagement = () => {
                 <Button
                   variant="contained"
                   startIcon={<Download />}
-                  onClick={() => exportExcelMutation.mutate()}
-                  disabled={exportExcelMutation.isPending || !stats?.totalResponses}
+                  onClick={() => exportExcelCompatibleMutation.mutate()}
+                  disabled={exportExcelCompatibleMutation.isPending || !stats?.totalResponses}
                   sx={{ 
                     background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
                     '&:hover': {
@@ -538,17 +528,17 @@ const DataManagement = () => {
                     }
                   }}
                 >
-                  {exportExcelMutation.isPending
+                  {exportExcelCompatibleMutation.isPending
                     ? (i18n.language === 'am' ? 'በመላክ ላይ...' : 'Exporting...')
-                    : (i18n.language === 'am' ? 'Excel ላክ' : 'Export Excel')
+                    : (i18n.language === 'am' ? 'Excel (አማርኛ)' : 'Excel (Amharic)')
                   }
                 </Button>
 
                 <Button
                   variant="contained"
                   startIcon={<Download />}
-                  onClick={() => exportExcelBOMMutation.mutate()}
-                  disabled={exportExcelBOMMutation.isPending || !stats?.totalResponses}
+                  onClick={() => exportExcelCompatibleMutation.mutate()}
+                  disabled={exportExcelCompatibleMutation.isPending || !stats?.totalResponses}
                   sx={{ 
                     background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                     '&:hover': {
@@ -559,9 +549,9 @@ const DataManagement = () => {
                     }
                   }}
                 >
-                  {exportExcelBOMMutation.isPending
+                  {exportExcelCompatibleMutation.isPending
                     ? (i18n.language === 'am' ? 'በመላክ ላይ...' : 'Exporting...')
-                    : (i18n.language === 'am' ? 'Excel (አማርኛ)' : 'Excel (Amharic)')
+                    : (i18n.language === 'am' ? 'Excel (አማርኛ) v2' : 'Excel (Amharic) v2')
                   }
                 </Button>
               </Box>
