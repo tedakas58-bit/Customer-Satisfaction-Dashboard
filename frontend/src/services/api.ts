@@ -2,7 +2,7 @@ import axios from 'axios';
 import { surveyResponseService, questionService } from './supabaseService';
 
 // API base URL (fallback for non-Supabase endpoints)
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 // Create axios instance for fallback
 const api = axios.create({
