@@ -102,8 +102,16 @@ export const exportToExcel = async (language: 'en' | 'am' = 'en') => {
 
     console.log(`📊 Exporting ${responses.length} responses...`);
 
-    // Create workbook
+    // Create workbook with proper encoding for Amharic
     const workbook = XLSX.utils.book_new();
+    
+    // Set workbook properties for better Amharic support
+    workbook.Props = {
+      Title: language === 'am' ? 'የደንበኛ እርካታ ሪፖርት' : 'Customer Satisfaction Report',
+      Subject: language === 'am' ? 'ለሚ ኩራ ክፍለ ከተማ ሰላምና ደህንነት ቢሮ' : 'Lemi Kura Sub-City Peace and Security Office',
+      Author: 'CSAT System',
+      CreatedDate: new Date()
+    };
 
     // 1. Executive Summary Sheet
     const summarySheet = createSummarySheet(summaryData, responses, language);
@@ -125,20 +133,36 @@ export const exportToExcel = async (language: 'en' | 'am' = 'en') => {
     const rawDataSheet = createRawDataSheet(responses, language);
     XLSX.utils.book_append_sheet(workbook, rawDataSheet, language === 'am' ? 'ጥሬ መረጃ' : 'Raw Data');
 
+    // 6. Font Instructions Sheet (for Amharic)
+    if (language === 'am') {
+      const fontSheet = createFontInstructionsSheet();
+      XLSX.utils.book_append_sheet(workbook, fontSheet, 'የፊደል መመሪያ');
+    }
+
     // Generate filename with timestamp
     const timestamp = new Date().toISOString().split('T')[0];
     const filename = language === 'am' 
       ? `የደንበኛ-እርካታ-ሪፖርት-${timestamp}.xlsx`
       : `Customer-Satisfaction-Report-${timestamp}.xlsx`;
 
-    // Export file
-    XLSX.writeFile(workbook, filename);
+    // Export file with proper encoding
+    const writeOptions = {
+      bookType: 'xlsx' as const,
+      type: 'buffer' as const,
+      compression: true,
+      Props: workbook.Props
+    };
+
+    // Write file with UTF-8 support
+    XLSX.writeFile(workbook, filename, writeOptions);
     
     console.log('✅ Excel export completed successfully');
-    alert(language === 'am' 
-      ? `ሪፖርት በተሳካ ሁኔታ ወደ ${filename} ተላክ`
-      : `Report successfully exported to ${filename}`
-    );
+    
+    const successMessage = language === 'am' 
+      ? `ሪፖርት በተሳካ ሁኔታ ወደ ${filename} ተላክ\n\nለአማርኛ ጽሁፍ ትክክለኛ እይታ፣ የሚከተሉትን ፊደሎች ይጠቀሙ:\n• Nyala\n• Ebrima\n• Noto Sans Ethiopic\n• ወይም ከ docs/fonts ውስጥ ያሉትን ፊደሎች`
+      : `Report successfully exported to ${filename}\n\nFor proper Amharic text display, use fonts like:\n• Nyala\n• Ebrima\n• Noto Sans Ethiopic\n• Or fonts from docs/fonts folder`;
+    
+    alert(successMessage);
 
   } catch (error: any) {
     console.error('❌ Export error:', error);
@@ -363,6 +387,48 @@ const createRawDataSheet = (responses: any[], language: 'en' | 'am') => {
 
     data.push(row);
   });
+
+  return XLSX.utils.aoa_to_sheet(data);
+};
+
+// Create Font Instructions Sheet for Amharic
+const createFontInstructionsSheet = () => {
+  const data = [
+    ['የአማርኛ ፊደል መመሪያ - Amharic Font Instructions'],
+    [''],
+    ['ይህ ሪፖርት አማርኛ ጽሁፍ ይዟል። ትክክለኛ እይታ ለማግኘት የሚከተሉትን ያድርጉ:'],
+    ['This report contains Amharic text. For proper display, please follow these steps:'],
+    [''],
+    ['1. የሚመከሩ ፊደሎች - Recommended Fonts:'],
+    ['   • Nyala (Windows ላይ ነባር - Built-in on Windows)'],
+    ['   • Ebrima (Windows 8+ ላይ ነባር - Built-in on Windows 8+)'],
+    ['   • Noto Sans Ethiopic (Google Fonts)'],
+    ['   • Kefa (macOS ላይ ነባር - Built-in on macOS)'],
+    [''],
+    ['2. ከዚህ ፕሮጀክት ውስጥ ያሉ ፊደሎች - Fonts from this project:'],
+    ['   docs/fonts/geez-free/ ውስጥ ያሉ ፊደሎች:'],
+    ['   • Nyala, Ebrima, GeezDigital'],
+    ['   • Adwa, Shiromeda, Addis'],
+    ['   • እና ሌሎች በርካታ ፊደሎች'],
+    [''],
+    ['3. Excel ውስጥ ፊደል መቀየር - Changing Font in Excel:'],
+    ['   • ሁሉንም ሴሎች ይምረጡ (Ctrl+A)'],
+    ['   • Home > Font dropdown'],
+    ['   • ከላይ የተዘረዘሩትን ፊደሎች ይምረጡ'],
+    [''],
+    ['4. ፊደል መጫን - Installing Fonts:'],
+    ['   • docs/fonts/geez-free/ ውስጥ ያሉትን .ttf ፋይሎች ይክፈቱ'],
+    ['   • "Install" ቁልፍን ይጫኑ'],
+    ['   • Excel ን እንደገና ይክፈቱ'],
+    [''],
+    ['5. ችግር ካጋጠመ - If you have issues:'],
+    ['   • ፊደሉ በትክክል መጫኑን ያረጋግጡ'],
+    ['   • Excel ን እንደገና ይክፈቱ'],
+    ['   • ሌላ አማርኛ ፊደል ይሞክሩ'],
+    [''],
+    ['ማሳሰቢያ: ይህ መመሪያ ሪፖርቱን በትክክል ለማንበብ ብቻ ነው።'],
+    ['Note: These instructions are only for proper reading of the report.']
+  ];
 
   return XLSX.utils.aoa_to_sheet(data);
 };
