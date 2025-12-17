@@ -2,6 +2,8 @@
 
 A modern full-stack web application for analyzing and visualizing Ethiopian-language customer satisfaction survey data for the Lemi Kura Sub-City Peace and Security Office.
 
+<!-- Deployment trigger: 2024-12-17 -->
+
 ## Architecture Overview
 
 ### Technology Stack
