@@ -29,10 +29,7 @@ import {
   TrendingUp, 
   People, 
   Assessment,
-  Star,
-  BarChart,
-  PieChart,
-  Timeline
+  Star
 } from '@mui/icons-material';
 import { fetchOverallSummary } from '../services/api';
 import { surveyResponseService } from '../services/supabaseService';
@@ -341,9 +338,9 @@ const ReportsSection = () => {
             {responses.length > 0 ? (
               <Box>
                 {/* Gender Distribution */}
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="body2" sx={{ color: 'white', mb: 2 }}>
-                    {i18n.language === 'am' ? 'በፆታ' : 'By Gender'}
+                <Box sx={{ mb: 4 }}>
+                  <Typography variant="body1" sx={{ color: 'white', mb: 2, fontWeight: 600 }}>
+                    {i18n.language === 'am' ? 'በፆታ ስርጭት' : 'Gender Distribution'}
                   </Typography>
                   {['male', 'female'].map((gender) => {
                     const count = responses.filter(r => r.gender === gender).length;
@@ -352,25 +349,30 @@ const ReportsSection = () => {
                     return (
                       <Box key={gender} sx={{ mb: 2 }}>
                         <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                          <Typography sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>
-                            {i18n.language === 'am' ? (gender === 'male' ? 'ወንድ' : 'ሴት') : gender}
+                          <Typography sx={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem', fontWeight: 500 }}>
+                            {i18n.language === 'am' ? (gender === 'male' ? 'ወንድ' : 'ሴት') : (gender === 'male' ? 'Male' : 'Female')}
                           </Typography>
-                          <Typography sx={{ color: 'white', fontSize: '0.9rem', fontWeight: 600 }}>
-                            {count} ({percentage.toFixed(0)}%)
-                          </Typography>
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Typography sx={{ color: 'white', fontSize: '1rem', fontWeight: 700 }}>
+                              {percentage.toFixed(1)}%
+                            </Typography>
+                            <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>
+                              ({count} {i18n.language === 'am' ? 'ሰዎች' : 'people'})
+                            </Typography>
+                          </Box>
                         </Box>
                         <LinearProgress
                           variant="determinate"
                           value={percentage}
                           sx={{
-                            height: 6,
-                            borderRadius: 3,
+                            height: 8,
+                            borderRadius: 4,
                             backgroundColor: 'rgba(255,255,255,0.1)',
                             '& .MuiLinearProgress-bar': {
                               background: gender === 'male' 
                                 ? 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)'
                                 : 'linear-gradient(135deg, #EC4899 0%, #BE185D 100%)',
-                              borderRadius: 3,
+                              borderRadius: 4,
                             },
                           }}
                         />
@@ -380,22 +382,124 @@ const ReportsSection = () => {
                 </Box>
 
                 {/* Age Distribution */}
-                <Box>
-                  <Typography variant="body2" sx={{ color: 'white', mb: 2 }}>
-                    {i18n.language === 'am' ? 'በዕድመ' : 'By Age'}
+                <Box sx={{ mb: 4 }}>
+                  <Typography variant="body1" sx={{ color: 'white', mb: 2, fontWeight: 600 }}>
+                    {i18n.language === 'am' ? 'በዕድሜ ስርጭት' : 'Age Distribution'}
                   </Typography>
-                  {['18-30', '31-40', '41-50', '50+'].map((age) => {
+                  {['18-30', '31-40', '41-50', '50+'].map((age, index) => {
                     const count = responses.filter(r => r.age === age).length;
                     const percentage = responses.length > 0 ? (count / responses.length) * 100 : 0;
                     
+                    const colors = [
+                      'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                      'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                      'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+                      'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
+                    ];
+                    
                     return (
-                      <Box key={age} display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                      <Box key={age} sx={{ mb: 2 }}>
+                        <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                          <Typography sx={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.9rem', fontWeight: 500 }}>
+                            {age} {i18n.language === 'am' ? 'ዓመት' : 'years'}
+                          </Typography>
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Typography sx={{ color: 'white', fontSize: '0.95rem', fontWeight: 700 }}>
+                              {percentage.toFixed(1)}%
+                            </Typography>
+                            <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem' }}>
+                              ({count})
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={percentage}
+                          sx={{
+                            height: 6,
+                            borderRadius: 3,
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            '& .MuiLinearProgress-bar': {
+                              background: colors[index],
+                              borderRadius: 3,
+                            },
+                          }}
+                        />
+                      </Box>
+                    );
+                  })}
+                </Box>
+
+                {/* Education Level Distribution */}
+                <Box sx={{ mb: 4 }}>
+                  <Typography variant="body1" sx={{ color: 'white', mb: 2, fontWeight: 600 }}>
+                    {i18n.language === 'am' ? 'የትምህርት ደረጃ ስርጭት' : 'Education Level Distribution'}
+                  </Typography>
+                  {['unfilled', '1-8', '9-12', 'certificate', 'diploma', 'first_degree', 'second_degree_plus'].map((education, index) => {
+                    const count = responses.filter(r => r.education_level === education).length;
+                    const percentage = responses.length > 0 ? (count / responses.length) * 100 : 0;
+                    
+                    if (count === 0) return null; // Don't show categories with 0 responses
+                    
+                    const educationLabels: Record<string, string> = {
+                      unfilled: i18n.language === 'am' ? 'ያልተሞላ' : 'Unfilled',
+                      '1-8': '1-8',
+                      '9-12': '9-12',
+                      certificate: i18n.language === 'am' ? 'ሰርተፊኬት' : 'Certificate',
+                      diploma: i18n.language === 'am' ? 'ዲፕሎማ' : 'Diploma',
+                      first_degree: i18n.language === 'am' ? 'የመጀመሪያ ዲግሪ' : 'First Degree',
+                      second_degree_plus: i18n.language === 'am' ? 'ሁለተኛ ዲግሪ+' : 'Second Degree+'
+                    };
+                    
+                    return (
+                      <Box key={education} display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                         <Typography sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem' }}>
-                          {age}
+                          {educationLabels[education]}
                         </Typography>
-                        <Typography sx={{ color: 'white', fontSize: '0.85rem', fontWeight: 600 }}>
-                          {count} ({percentage.toFixed(0)}%)
+                        <Box sx={{ textAlign: 'right' }}>
+                          <Typography sx={{ color: 'white', fontSize: '0.9rem', fontWeight: 600 }}>
+                            {percentage.toFixed(1)}%
+                          </Typography>
+                          <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem' }}>
+                            ({count})
+                          </Typography>
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Box>
+
+                {/* Marital Status Distribution */}
+                <Box>
+                  <Typography variant="body1" sx={{ color: 'white', mb: 2, fontWeight: 600 }}>
+                    {i18n.language === 'am' ? 'የጋብቻ ሁኔታ ስርጭት' : 'Marital Status Distribution'}
+                  </Typography>
+                  {['married', 'single', 'divorced', 'widowed'].map((status) => {
+                    const count = responses.filter(r => r.marital_status === status).length;
+                    const percentage = responses.length > 0 ? (count / responses.length) * 100 : 0;
+                    
+                    if (count === 0) return null; // Don't show categories with 0 responses
+                    
+                    const statusLabels: Record<string, string> = {
+                      married: i18n.language === 'am' ? 'ያገባ' : 'Married',
+                      single: i18n.language === 'am' ? 'ያላገባ' : 'Single',
+                      divorced: i18n.language === 'am' ? 'የተፋታ' : 'Divorced',
+                      widowed: i18n.language === 'am' ? 'የሞተበት/ባት' : 'Widowed'
+                    };
+                    
+                    return (
+                      <Box key={status} display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                        <Typography sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem' }}>
+                          {statusLabels[status]}
                         </Typography>
+                        <Box sx={{ textAlign: 'right' }}>
+                          <Typography sx={{ color: 'white', fontSize: '0.9rem', fontWeight: 600 }}>
+                            {percentage.toFixed(1)}%
+                          </Typography>
+                          <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem' }}>
+                            ({count})
+                          </Typography>
+                        </Box>
                       </Box>
                     );
                   })}
