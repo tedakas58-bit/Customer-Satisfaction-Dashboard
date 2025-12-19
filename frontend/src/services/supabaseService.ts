@@ -130,10 +130,15 @@ export const surveyResponseService = {
     // Get recent responses (last 5)
     const recentResponses = responses?.slice(0, 5) || [];
 
+    // Calculate completion rate
+    const completionRate = responses && responses.length > 0 
+      ? responses.reduce((sum, response) => sum + (response.completion_rate || 0), 0) / responses.length
+      : 0;
+
     return {
       totalResponses,
       overallCSAT,
-      responseRate: totalResponses > 0 ? 0.89 : 0, // This would need to be calculated based on your metrics
+      responseRate: completionRate,
       lastUpdated: new Date().toISOString(),
       demographicCounts,
       dimensionScores,
