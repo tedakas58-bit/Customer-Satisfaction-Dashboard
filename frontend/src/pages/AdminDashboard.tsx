@@ -48,6 +48,7 @@ import { fetchOverallSummary } from '../services/api';
 import { questionService } from '../services/supabaseService';
 import DataManagement from '../components/DataManagement';
 import EmptyStateMessage from '../components/EmptyStateMessage';
+import ReportsSection from '../components/ReportsSection';
 import { addSampleData } from '../utils/sampleData';
 import { exportToCSV } from '../services/csvExportService';
 import { useAuth } from '../contexts/AuthContext';
@@ -598,14 +599,7 @@ const AdminDashboard = () => {
       </TabPanel>
       
       <TabPanel value={tabValue} index={2}>
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography variant="h5" sx={{ color: 'white', mb: 2 }}>
-            {i18n.language === 'am' ? 'ሪፖርቶች ክፍል' : 'Reports Section'}
-          </Typography>
-          <Typography sx={{ color: 'rgba(255,255,255,0.7)' }}>
-            {i18n.language === 'am' ? 'ዝርዝር ሪፖርቶች እና ትንታኔዎች ይህ ላይ ይታያሉ' : 'Detailed reports and analytics will be displayed here'}
-          </Typography>
-        </Box>
+        <ReportsSection />
       </TabPanel>
 
       <TabPanel value={tabValue} index={3}>
