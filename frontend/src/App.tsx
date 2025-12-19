@@ -11,6 +11,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminSignIn from './pages/AdminSignIn';
 import AdminSetup from './pages/AdminSetup';
 import SurveyForm from './pages/SurveyForm';
+import Dashboard from './pages/Dashboard';
 import Layout from './components/Layout/Layout';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -130,6 +131,13 @@ function App() {
                 <Routes>
                   {/* Role Selection - No Layout */}
                   <Route path="/" element={<RoleSelection />} />
+                  
+                  {/* Dashboard Route - With Layout */}
+                  <Route path="/dashboard" element={
+                    <Layout>
+                      <Dashboard />
+                    </Layout>
+                  } />
                   
                   {/* Customer Routes - No Layout */}
                   <Route path="/customer" element={<CustomerDashboard />} />

@@ -74,6 +74,7 @@ const Dashboard: React.FC = () => {
       <Box sx={{ mb: 4 }}>
         <Button
           startIcon={<ArrowBack />}
+          onClick={() => navigate('/')}
           sx={{ 
             color: 'rgba(255,255,255,0.8)', 
             mb: 2,
