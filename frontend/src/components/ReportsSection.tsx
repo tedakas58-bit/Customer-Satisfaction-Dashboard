@@ -37,7 +37,7 @@ import {
 import { fetchOverallSummary } from '../services/api';
 import { surveyResponseService } from '../services/supabaseService';
 import { exportToCSV } from '../services/csvExportService';
-import { exportToExcel } from '../services/excelCompatibleExport';
+import { exportToExcelCompatibleCSV } from '../services/excelCompatibleExport';
 
 const ReportsSection = () => {
   const { i18n } = useTranslation();
@@ -86,9 +86,9 @@ const ReportsSection = () => {
 
     try {
       if (exportFormat === 'csv') {
-        await exportToCSV(allResponses, summaryData, i18n.language);
+        await exportToCSV(i18n.language as 'en' | 'am');
       } else {
-        await exportToExcel(allResponses, summaryData, i18n.language);
+        await exportToExcelCompatibleCSV(i18n.language as 'en' | 'am');
       }
     } catch (error) {
       console.error('Export error:', error);

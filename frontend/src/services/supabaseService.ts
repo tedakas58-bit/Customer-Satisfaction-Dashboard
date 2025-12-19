@@ -49,7 +49,7 @@ export const surveyResponseService = {
   async getOverallSummary() {
     const { data: responses, error } = await supabase
       .from('survey_responses')
-      .select('overall_score, gender, age, education_level, marital_status, created_at, dimension_scores');
+      .select('overall_score, gender, age, education_level, marital_status, created_at, dimension_scores, completion_rate');
 
     if (error) throw error;
 
@@ -132,7 +132,7 @@ export const surveyResponseService = {
 
     // Calculate completion rate
     const completionRate = responses && responses.length > 0 
-      ? responses.reduce((sum, response) => sum + (response.completion_rate || 0), 0) / responses.length
+      ? responses.reduce((sum, response) => sum + (response.completion_rate || 1.0), 0) / responses.length
       : 0;
 
     return {
