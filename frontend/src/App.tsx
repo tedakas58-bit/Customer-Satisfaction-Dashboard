@@ -132,12 +132,8 @@ function App() {
                   {/* Role Selection - No Layout */}
                   <Route path="/" element={<RoleSelection />} />
                   
-                  {/* Dashboard Route - With Layout */}
-                  <Route path="/dashboard" element={
-                    <Layout>
-                      <Dashboard />
-                    </Layout>
-                  } />
+                  {/* Dashboard Route - Customer Dashboard */}
+                  <Route path="/dashboard" element={<CustomerDashboard />} />
                   
                   {/* Customer Routes - No Layout */}
                   <Route path="/customer" element={<CustomerDashboard />} />
