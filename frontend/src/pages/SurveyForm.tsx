@@ -16,12 +16,13 @@ import {
   Avatar,
   LinearProgress,
 } from '@mui/material';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { ArrowBack, ArrowForward, Send, Person, Assessment } from '@mui/icons-material';
 import { submitSurveyResponse } from '../services/api';
+import SuccessMessage from '../components/SuccessMessage';
 
 interface SurveyData {
   demographics: {
@@ -41,6 +42,7 @@ const SurveyForm = () => {
   const queryClient = useQueryClient();
   
   const [activeStep, setActiveStep] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [surveyData, setSurveyData] = useState<SurveyData>({
     demographics: {
       gender: '',
@@ -161,9 +163,20 @@ const SurveyForm = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['overallSummary'] });
       queryClient.invalidateQueries({ queryKey: ['dimensionScores'] });
-      navigate('/dashboard');
+      setShowSuccess(true);
     },
   });
+
+  // Auto redirect to dashboard after showing success message
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => {
+        navigate('/');
+      }, 4000); // Show success message for 4 seconds, then redirect
+
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess, navigate]);
 
   const handleDemographicChange = (field: string, value: string) => {
     setSurveyData(prev => ({
@@ -518,6 +531,15 @@ const SurveyForm = () => {
       )}
     </Box>
   );
+
+  // Show success message if survey was submitted successfully
+  if (showSuccess) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <SuccessMessage />
+      </Box>
+    );
+  }
 
   return (
     <Box>
