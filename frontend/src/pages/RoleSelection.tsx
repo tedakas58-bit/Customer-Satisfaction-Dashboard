@@ -52,7 +52,7 @@ const RoleSelection = () => {
           </Typography>
           
           <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.8)', mb: 3 }}>
-            {i18n.language === 'am' ? 'ለሚ ኩራ ክፍለ ከተማ ሰላምና ደህንነት ቢሮ' : 'Lemi Kura Sub-City Peace and Security Office'}
+            {i18n.language === 'am' ? 'ለሚ ኩራ ክፍለ ከተማ ሰላምና ፀጥታ አስተዳደር ጽ/ቤት' : 'Lemi Kura Sub-City Peace and Security Office'}
           </Typography>
 
           <Button

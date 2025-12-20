@@ -35,7 +35,7 @@ const AmharicTest = () => {
         <Box sx={{ p: 2, border: '1px solid rgba(255,255,255,0.2)', borderRadius: 1, mb: 2 }}>
           <Typography sx={{ color: 'white', fontSize: '18px', lineHeight: 1.8 }}>
             የደንበኛ እርካታ ሪፖርት - አጠቃላይ ማጠቃለያ<br/>
-            ለሚ ኩራ ክፍለ ከተማ ሰላምና ደህንነት ቢሮ<br/>
+            ለሚ ኩራ ክፍለ ከተማ ሰላምና ፀጥታ አስተዳደር ጽ/ቤት<br/>
             ሰራተኞች ፈጣን አገልግሎት ይሰጣሉ<br/>
             የአገልግሎት ጥራት ልኬቶች<br/>
             ተጨባጭነት፣ ፈጣን አገልግሎት፣ ተዓማኒነት፣ የሰራተኞች ብቃት፣ ተሳትፎ

@@ -21,7 +21,7 @@ export const exportToCSV = async (language: 'en' | 'am' = 'en') => {
     
     // Add header
     csvContent += language === 'am' ? 'የደንበኛ እርካታ ሪፖርት\n' : 'Customer Satisfaction Report\n';
-    csvContent += language === 'am' ? 'ለሚ ኩራ ክፍለ ከተማ ሰላምና ደህንነት ቢሮ\n' : 'Lemi Kura Sub-City Peace and Security Office\n';
+    csvContent += language === 'am' ? 'ለሚ ኩራ ክፍለ ከተማ ሰላምና ፀጥታ አስተዳደር ጽ/ቤት\n' : 'Lemi Kura Sub-City Peace and Security Office\n';
     csvContent += `${language === 'am' ? 'የሪፖርት ቀን' : 'Report Date'}: ${new Date().toLocaleDateString()}\n\n`;
     
     // Add summary

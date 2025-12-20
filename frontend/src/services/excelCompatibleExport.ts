@@ -170,7 +170,7 @@ const escapeCSV = (value: any): string => {
 // Create Executive Summary Section
 const createSummarySection = (summaryData: any, responses: any[], language: 'en' | 'am'): string => {
   const title = language === 'am' ? 'የደንበኛ እርካታ ሪፖርት - አጠቃላይ ማጠቃለያ' : 'Customer Satisfaction Report - Executive Summary';
-  const office = language === 'am' ? 'ለሚ ኩራ ክፍለ ከተማ ሰላምና ደህንነት ቢሮ' : 'Lemi Kura Sub-City Peace and Security Office';
+  const office = language === 'am' ? 'ለሚ ኩራ ክፍለ ከተማ ሰላምና ፀጥታ አስተዳደር ጽ/ቤት' : 'Lemi Kura Sub-City Peace and Security Office';
   
   let section = `${escapeCSV(title)}\n`;
   section += `${escapeCSV(office)}\n`;

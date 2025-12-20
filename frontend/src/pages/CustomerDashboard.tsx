@@ -57,7 +57,7 @@ const CustomerDashboard = () => {
               {i18n.language === 'am' ? 'የደንበኛ እርካታ ግምገማ' : 'Customer Satisfaction Survey'}
             </Typography>
             <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-              {i18n.language === 'am' ? 'ለሚ ኩራ ክፍለ ከተማ ሰላምና ደህንነት ቢሮ' : 'Lemi Kura Sub-City Peace and Security Office'}
+              {i18n.language === 'am' ? 'ለሚ ኩራ ክፍለ ከተማ ሰላምና ፀጥታ አስተዳደር ጽ/ቤት' : 'Lemi Kura Sub-City Peace and Security Office'}
             </Typography>
           </Box>
         </Box>

@@ -102,7 +102,7 @@ const encodeText = (text: string) => {
 ### After Fix:
 ```
 የደንበኛ እርካታ ሪፖርት - አጠቃላይ ማጠቃለያ
-ለሚ ኩራ ክፍለ ከተማ ሰላምና ደህንነት ቢሮ
+ለሚ ኩራ ክፍለ ከተማ ሰላምና ፀጥታ አስተዳደር ጽ/ቤት
 ```
 
 ## Troubleshooting

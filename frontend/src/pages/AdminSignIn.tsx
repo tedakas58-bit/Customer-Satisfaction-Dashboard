@@ -275,7 +275,7 @@ const AdminSignIn = () => {
         <Box sx={{ textAlign: 'center', mt: 4 }}>
           <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
             {i18n.language === 'am' 
-              ? 'ለሚ ኩራ ክፍለ ከተማ ሰላምና ደህንነት ቢሮ'
+              ? 'ለሚ ኩራ ክፍለ ከተማ ሰላምና ፀጥታ አስተዳደር ጽ/ቤት'
               : 'Lemi Kura Sub-City Peace and Security Office'
             }
           </Typography>
